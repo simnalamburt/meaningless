@@ -1,3 +1,5 @@
+import base64, struct
+
 class Meaningless(object):
     def __init__(self, key_64):
         self._upper = key_64 >> 32
@@ -27,3 +29,15 @@ class Meaningless(object):
 
     def decode_hex(self, cstr):
         return self.decode(int(cstr, 16))
+
+    def encode_base64(self, plain_64):
+        coded = self.encode(plain_64)
+        bytes = struct.pack('<Q', coded).rstrip(b'\x00')
+        if len(bytes) == 0:
+            bytes = b'\x00'
+        return base64.urlsafe_b64encode(bytes).rstrip(b'=')
+
+    def decode_base64(self, coded_base64):
+        bytes = base64.urlsafe_b64decode(coded_base64 + b'==')
+        coded = struct.unpack('<Q', bytes + b'\x00'* (8-len(bytes)) )[0]
+        return self.decode(coded)
